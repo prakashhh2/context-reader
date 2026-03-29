@@ -17,11 +17,13 @@ A Chrome extension that lets students highlight any text on PDFs or webpages and
 ## 🚀 Quick Setup (5 minutes)
 
 ### Step 1: Get a Gemini API Key (Free)
+
 1. Go to [aistudio.google.com](https://aistudio.google.com/apikey)
 2. Click **"Create API Key"**
 3. Copy the key
 
 ### Step 2: Load the Extension in Chrome
+
 1. Open Chrome → go to `chrome://extensions/`
 2. Turn ON **"Developer mode"** (top-right toggle)
 3. Click **"Load unpacked"**
@@ -29,12 +31,14 @@ A Chrome extension that lets students highlight any text on PDFs or webpages and
 5. The 📖 icon appears in your toolbar
 
 ### Step 3: Add Your API Key
+
 1. Click the 📖 icon in the toolbar
 2. Paste your Gemini API key
 3. Choose difficulty level and language
 4. Click **Save Settings**
 
 ### Step 4: Start Using!
+
 1. Open any PDF or webpage
 2. Highlight text you want explained
 3. Click the floating **"📖 Explain"** button
@@ -82,15 +86,3 @@ Content Script renders result in floating panel
 - **Google Gemini API** (gemini-2.5-flash)
 - **Vanilla JavaScript** (no frameworks — fast & lightweight)
 - **CSS with dark mode support**
-
-## 💡 Hackathon Presentation Tips
-
-1. **Demo on a real academic PDF** — show it working on a research paper
-2. **Switch difficulty levels live** — show simple vs detailed explanations
-3. **Use the Quiz mode** — judges love interactive features
-4. **Show the right-click menu** — it's a power-user feature
-5. **Mention it works offline-free** — only needs a free API key, no server
-
-## 📝 License
-
-MIT — Built for educational purposes.
