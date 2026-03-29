@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Context Reader Settings</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 340px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #fafafc;
+      color: #1a1a2e;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 20px 20px 16px;
+      background: #1a1a2e;
+      color: #fff;
+    }
+
+    .header-icon {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .header h1 {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .header p {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 2px;
+    }
+
+    .section {
+      padding: 16px 20px;
+      border-bottom: 1px solid #ebebf0;
+    }
+
+    .section:last-child {
+      border-bottom: none;
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #555;
+      display: block;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 13px;
+      border: 1.5px solid #e0e0e8;
+      border-radius: 10px;
+      background: #fff;
+      color: #1a1a2e;
+      font-family: inherit;
+      transition: border-color 0.15s;
+      outline: none;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    select:focus {
+      border-color: #6c5ce7;
+    }
+
+    .key-wrapper {
+      position: relative;
+    }
+
+    .key-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      color: #999;
+      padding: 2px;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: #999;
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+
+    .hint a {
+      color: #6c5ce7;
+      text-decoration: none;
+    }
+
+    .hint a:hover {
+      text-decoration: underline;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .save-btn {
+      width: 100%;
+      padding: 12px;
+      background: #6c5ce7;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .save-btn:hover {
+      background: #5a4bd1;
+    }
+
+    .save-btn:active {
+      transform: scale(0.98);
+    }
+
+    .status {
+      text-align: center;
+      font-size: 12px;
+      color: #27ae60;
+      margin-top: 8px;
+      min-height: 18px;
+      font-weight: 500;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      padding: 12px 20px 16px;
+      background: #f5f5f8;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 20px;
+      font-weight: 700;
+      color: #6c5ce7;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .how-to {
+      padding: 14px 20px;
+      background: #f0f0ff;
+      border-radius: 10px;
+      margin: 0 20px 16px;
+    }
+
+    .how-to h3 {
+      font-size: 12px;
+      font-weight: 700;
+      color: #6c5ce7;
+      margin-bottom: 8px;
+    }
+
+    .how-to ol {
+      padding-left: 18px;
+      font-size: 12px;
+      color: #555;
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="header-icon">📖</span>
+    <div>
+      <h1>Context Reader</h1>
+      <p>AI-powered text explainer for students</p>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num" id="stat-explains">0</div>
+      <div class="stat-label">Explains</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" id="stat-words">0</div>
+      <div class="stat-label">Words read</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <label for="api-key">Gemini API Key</label>
+    <div class="key-wrapper">
+      <input type="password" id="api-key" placeholder="Paste your Gemini API key…">
+      <button class="key-toggle" id="key-toggle">👁️</button>
+    </div>
+    <p class="hint">
+      Get a free key at
+      <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com</a>
+    </p>
+  </div>
+
+  <div class="section">
+    <div class="row">
+      <div>
+        <label for="difficulty">Difficulty</label>
+        <select id="difficulty">
+          <option value="simple">🟢 Simple (ELI12)</option>
+          <option value="medium">🟡 Medium (High school)</option>
+          <option value="detailed">🔴 Detailed (College)</option>
+        </select>
+      </div>
+      <div>
+        <label for="language">Language</label>
+        <select id="language">
+          <option value="English">English</option>
+          <option value="Hindi">हिंदी</option>
+          <option value="Spanish">Español</option>
+          <option value="French">Français</option>
+          <option value="German">Deutsch</option>
+          <option value="Chinese">中文</option>
+          <option value="Japanese">日本語</option>
+          <option value="Korean">한국어</option>
+          <option value="Arabic">العربية</option>
+          <option value="Portuguese">Português</option>
+          <option value="Tamil">தமிழ்</option>
+          <option value="Telugu">తెలుగు</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <button class="save-btn" id="save-btn">Save Settings</button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="how-to">
+    <h3>How to use</h3>
+    <ol>
+      <li>Open any PDF or webpage in Chrome</li>
+      <li>Highlight any text you don't understand</li>
+      <li>Click the "📖 Explain" button that appears</li>
+      <li>Or right-click → "Explain this in simple words"</li>
+    </ol>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
