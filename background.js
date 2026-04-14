@@ -31,7 +31,9 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       chrome.runtime.getURL("pdf-viewer.html") +
       "?url=" +
       encodeURIComponent(tab.url);
-    chrome.tabs.update(tabId, { url: viewerUrl });
+    if (tab.url !== viewerUrl) {
+      chrome.tabs.update(tabId, { url: viewerUrl });
+    }
   }
 });
 
@@ -71,7 +73,7 @@ async function handleGeminiCall(text, mode, difficulty, language) {
     return { error: "Please select some text first." };
   }
 
-  const apiKey = await getConfiguredApiKey();
+  const settings = await chrome.storage.sync.get(["apiKey"]);
 
   if (!apiKey) {
     return { error: "NO_API_KEY" };
@@ -147,7 +149,7 @@ ${text}
       }
 
       if (response.status === 400 || response.status === 403) {
-        throw new Error("Gemini rejected the API key or request. Please verify your API key in .env or the extension popup.");
+        throw new Error("Gemini rejected the API key or request. Please verify your API key in the extension popup.");
       }
 
       throw new Error(errData?.error?.message || `API Error: ${response.status}`);

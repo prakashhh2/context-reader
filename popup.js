@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
     chrome.storage.sync.set(nextSettings, () => {
       statusEl.textContent = apiKey
         ? "✅ Settings saved!"
-        : "✅ Settings saved. Using .env if available.";
+        : "✅ Language and difficulty saved. Add an API key when you're ready.";
       statusEl.style.color = "#27ae60";
       setTimeout(() => (statusEl.textContent = ""), 2500);
     });
