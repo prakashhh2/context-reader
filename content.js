@@ -1,7 +1,4 @@
-// ============================================
-// Context Reader — Content Script
-// Detects text selection, shows floating panel
-// ============================================
+
 
 (function () {
   // Prevent double injection
@@ -11,10 +8,7 @@
   let selectedText = "";
   let currentMode = "explain";
 
-  // ============================================
-  // Create UI Elements
-  // ============================================
-
+ 
   // Floating action button (appears near selection)
   const fab = document.createElement("div");
   fab.id = "ctx-reader-fab";
