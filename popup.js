@@ -40,16 +40,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const difficulty = difficultySelect.value;
     const language = languageSelect.value;
 
-    if (!apiKey) {
-      statusEl.textContent = "⚠️ Please enter an API key";
-      statusEl.style.color = "#e74c3c";
-      return;
+    const nextSettings = { difficulty, language };
+    if (apiKey) {
+      nextSettings.apiKey = apiKey;
     }
 
-    chrome.storage.sync.set({ apiKey, difficulty, language }, () => {
-      statusEl.textContent = "✅ Settings saved!";
+    chrome.storage.sync.set(nextSettings, () => {
+      statusEl.textContent = apiKey
+        ? "✅ Settings saved!"
+        : "✅ Language and difficulty saved. Add an API key when you're ready.";
       statusEl.style.color = "#27ae60";
-      setTimeout(() => (statusEl.textContent = ""), 2000);
+      setTimeout(() => (statusEl.textContent = ""), 2500);
     });
   });
 });
