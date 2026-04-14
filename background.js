@@ -4,18 +4,21 @@
 // ============================================
 
 const GEMINI_MODEL = "gemini-2.5-flash";
+const ENV_FILE_URL = chrome.runtime.getURL(".env");
+let cachedEnv = null;
 
 // Create right-click context menu on install
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({
-    id: "context-reader-explain",
-    title: "📖 Explain this in simple words",
-    contexts: ["selection"]
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: "context-reader-explain",
+      title: "📖 Explain this in simple words",
+      contexts: ["selection"]
+    });
   });
 
   // Set default settings
-  chrome.storage.sync.get(["apiKey", "difficulty", "language"], (result) => {
-    if (!result.apiKey) chrome.storage.sync.set({ apiKey: "AIzaSyAm_SlxGHkROJ56tJOqBbHv1FFNXPF2VQ0" });
+  chrome.storage.sync.get(["difficulty", "language"], (result) => {
     if (!result.difficulty) chrome.storage.sync.set({ difficulty: "simple" });
     if (!result.language) chrome.storage.sync.set({ language: "English" });
   });
@@ -64,9 +67,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 
 async function handleGeminiCall(text, mode, difficulty, language) {
-  const settings = await chrome.storage.sync.get(["apiKey"]);
+  if (!text || !text.trim()) {
+    return { error: "Please select some text first." };
+  }
 
-  if (!settings.apiKey) {
+  const apiKey = await getConfiguredApiKey();
+
+  if (!apiKey) {
     return { error: "NO_API_KEY" };
   }
 
@@ -117,7 +124,7 @@ ${text}
   const prompt = modePrompts[mode] || modePrompts["explain"];
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${settings.apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: "POST",
@@ -132,8 +139,18 @@ ${text}
     });
 
     if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(errData.error?.message || `API Error: ${response.status}`);
+      let errData = null;
+      try {
+        errData = await response.json();
+      } catch {
+        // Some non-JSON error responses are still useful via status text.
+      }
+
+      if (response.status === 400 || response.status === 403) {
+        throw new Error("Gemini rejected the API key or request. Please verify your API key in .env or the extension popup.");
+      }
+
+      throw new Error(errData?.error?.message || `API Error: ${response.status}`);
     }
 
     const data = await response.json();
@@ -147,4 +164,61 @@ ${text}
   } catch (err) {
     return { error: err.message };
   }
+}
+
+async function getConfiguredApiKey() {
+  const settings = await chrome.storage.sync.get(["apiKey"]);
+  if (settings.apiKey && settings.apiKey.trim()) {
+    return settings.apiKey.trim();
+  }
+
+  const env = await loadEnvFile();
+  const envKey = env.GEMINI_API_KEY?.trim();
+  if (!envKey || envKey === "your_gemini_api_key_here") {
+    return "";
+  }
+
+  return envKey;
+}
+
+async function loadEnvFile() {
+  if (cachedEnv) {
+    return cachedEnv;
+  }
+
+  try {
+    const response = await fetch(ENV_FILE_URL, { cache: "no-store" });
+    if (!response.ok) {
+      cachedEnv = {};
+      return cachedEnv;
+    }
+
+    const text = await response.text();
+    cachedEnv = parseEnv(text);
+    return cachedEnv;
+  } catch {
+    cachedEnv = {};
+    return cachedEnv;
+  }
+}
+
+function parseEnv(text) {
+  const env = {};
+
+  text.split(/\r?\n/).forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) return;
+
+    const separatorIndex = trimmed.indexOf("=");
+    if (separatorIndex === -1) return;
+
+    const key = trimmed.slice(0, separatorIndex).trim();
+    const value = trimmed.slice(separatorIndex + 1).trim().replace(/^['"]|['"]$/g, "");
+
+    if (key) {
+      env[key] = value;
+    }
+  });
+
+  return env;
 }
