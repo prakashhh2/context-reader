@@ -7,6 +7,7 @@
 
   let selectedText = "";
   let currentMode = "explain";
+  let activeRequestId = 0;
 
  
   // Floating action button (appears near selection)
@@ -54,7 +55,7 @@
     const sel = window.getSelection();
     const text = sel?.toString().trim();
 
-    if (text && text.length > 3) {
+    if (text && text.length > 3 && sel.rangeCount > 0) {
       selectedText = text;
 
       // Position FAB near the selection
@@ -102,6 +103,12 @@
   // Panel Logic
   // ============================================
   function openPanel(text) {
+    if (!text || !text.trim()) {
+      showError("Please select some text first.");
+      panel.style.display = "block";
+      return;
+    }
+
     // Position the panel
     const panelWidth = 420;
     const panelHeight = 400;
@@ -159,6 +166,8 @@
       const btn = document.getElementById("ctx-copy-btn");
       btn.textContent = "✅ Copied!";
       setTimeout(() => (btn.textContent = "📋 Copy"), 1500);
+    }).catch(() => {
+      showError("Copy failed. Please copy the text manually.");
     });
   });
 
@@ -167,6 +176,7 @@
   // ============================================
   async function callGemini(text, mode) {
     const content = document.getElementById("ctx-content");
+    const requestId = ++activeRequestId;
 
     // Show loading
     content.innerHTML = `
@@ -181,7 +191,7 @@
 
     let responded = false;
     const timeoutId = setTimeout(() => {
-      if (!responded) {
+      if (!responded && requestId === activeRequestId) {
         responded = true;
         showError("Request timed out. Please try again.");
       }
@@ -196,7 +206,7 @@
         language: settings.language || "English"
       },
       (response) => {
-        if (responded) return;
+        if (responded || requestId !== activeRequestId) return;
         responded = true;
         clearTimeout(timeoutId);
 
@@ -212,10 +222,8 @@
 
         if (response.error === "NO_API_KEY") {
           showError(
-            'No API key set! Click the extension icon in the toolbar and add your <a id="ctx-open-popup">Gemini API key</a>.'
+            "No API key set. Click the extension icon in the toolbar and add your Gemini API key."
           );
-          const link = document.getElementById("ctx-open-popup");
-          if (link) link.addEventListener("click", () => showError("Click the 📖 extension icon in the top-right of Chrome to add your key."));
           return;
         }
 
@@ -247,7 +255,7 @@
     content.innerHTML = `
       <div class="ctx-error">
         <span class="ctx-error-icon">⚠️</span>
-        <span>${msg}</span>
+        <span>${escapeHtml(msg)}</span>
       </div>
     `;
   }
@@ -256,7 +264,9 @@
   // Simple Markdown → HTML converter
   // ============================================
   function formatMarkdown(text) {
-    return text
+    const escaped = escapeHtml(text);
+
+    return escaped
       // Bold
       .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
       // Italic
@@ -282,6 +292,13 @@
       .replace(/$/, "</p>");
   }
 
+  function escapeHtml(text) {
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
   // ============================================
   // Make panel draggable
   // ============================================
@@ -301,8 +318,17 @@
 
     document.addEventListener("mousemove", (e) => {
       if (!isDragging) return;
-      element.style.left = `${e.clientX - offsetX}px`;
-      element.style.top = `${e.clientY - offsetY}px`;
+      const nextLeft = Math.min(
+        window.innerWidth - element.offsetWidth,
+        Math.max(0, e.clientX - offsetX)
+      );
+      const nextTop = Math.min(
+        window.innerHeight - element.offsetHeight,
+        Math.max(0, e.clientY - offsetY)
+      );
+
+      element.style.left = `${nextLeft}px`;
+      element.style.top = `${nextTop}px`;
     });
 
     document.addEventListener("mouseup", () => {
