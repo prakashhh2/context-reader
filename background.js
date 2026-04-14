@@ -7,15 +7,16 @@ const GEMINI_MODEL = "gemini-2.5-flash";
 
 // Create right-click context menu on install
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({
-    id: "context-reader-explain",
-    title: "📖 Explain this in simple words",
-    contexts: ["selection"]
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: "context-reader-explain",
+      title: "📖 Explain this in simple words",
+      contexts: ["selection"]
+    });
   });
 
   // Set default settings
-  chrome.storage.sync.get(["apiKey", "difficulty", "language"], (result) => {
-    if (!result.apiKey) chrome.storage.sync.set({ apiKey: "AIzaSyAm_SlxGHkROJ56tJOqBbHv1FFNXPF2VQ0" });
+  chrome.storage.sync.get(["difficulty", "language"], (result) => {
     if (!result.difficulty) chrome.storage.sync.set({ difficulty: "simple" });
     if (!result.language) chrome.storage.sync.set({ language: "English" });
   });
@@ -28,7 +29,9 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       chrome.runtime.getURL("pdf-viewer.html") +
       "?url=" +
       encodeURIComponent(tab.url);
-    chrome.tabs.update(tabId, { url: viewerUrl });
+    if (tab.url !== viewerUrl) {
+      chrome.tabs.update(tabId, { url: viewerUrl });
+    }
   }
 });
 
@@ -64,6 +67,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 
 async function handleGeminiCall(text, mode, difficulty, language) {
+  if (!text || !text.trim()) {
+    return { error: "Please select some text first." };
+  }
+
   const settings = await chrome.storage.sync.get(["apiKey"]);
 
   if (!settings.apiKey) {
@@ -132,8 +139,18 @@ ${text}
     });
 
     if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(errData.error?.message || `API Error: ${response.status}`);
+      let errData = null;
+      try {
+        errData = await response.json();
+      } catch {
+        // Some non-JSON error responses are still useful via status text.
+      }
+
+      if (response.status === 400 || response.status === 403) {
+        throw new Error("Gemini rejected the API key or request. Please verify your API key in the extension popup.");
+      }
+
+      throw new Error(errData?.error?.message || `API Error: ${response.status}`);
     }
 
     const data = await response.json();
